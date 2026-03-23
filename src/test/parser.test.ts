@@ -49,6 +49,19 @@ public unsafe partial struct Foo {}
   });
 });
 
+describe('class', () => {
+  it('parses partial class with kind "class"', () => {
+    const types = parseFile('namespace Test;\npublic partial class Foo {}', 'test.cs');
+    assert.equal(types[0]?.name, 'Foo');
+    assert.equal(types[0]?.kind, 'class');
+  });
+
+  it('parses sealed partial class with kind "class"', () => {
+    const types = parseFile('namespace Test;\npublic sealed partial class Encoding {}', 'test.cs');
+    assert.equal(types[0]?.kind, 'class');
+  });
+});
+
 describe('enum', () => {
   it('parses non-partial enum with members', () => {
     const src = `
