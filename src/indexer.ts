@@ -75,6 +75,11 @@ export function loadOrBuild(repoPath: string, indexPath: string): IndexResult {
 
 export function refresh(repoPath: string, indexPath: string): IndexResult {
   process.stderr.write('Running git pull...\n');
-  execSync('git pull', { cwd: repoPath });
+  try {
+    execSync('git pull', { cwd: repoPath, timeout: 30_000 });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`git pull failed: ${msg}`);
+  }
   return loadOrBuild(repoPath, indexPath);
 }

@@ -71,18 +71,23 @@ server.tool(
   'Run git pull on the FFXIVClientStructs repo and rebuild the index if the SHA changed. Use after a game patch.',
   {},
   async () => {
-    const result = doRefresh(REPO_PATH!, INDEX_PATH!);
-    types = result.index.types;
-    return {
-      content: [{
-        type: 'text',
-        text: JSON.stringify({
-          sha: result.sha,
-          rebuilt: result.rebuilt,
-          typesIndexed: result.typesIndexed,
-        }, null, 2),
-      }],
-    };
+    try {
+      const result = doRefresh(REPO_PATH!, INDEX_PATH!);
+      types = result.index.types;
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify({
+            sha: result.sha,
+            rebuilt: result.rebuilt,
+            typesIndexed: result.typesIndexed,
+          }, null, 2),
+        }],
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: 'text', text: `Error: ${msg}` }] };
+    }
   }
 );
 
