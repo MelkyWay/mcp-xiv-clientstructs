@@ -52,7 +52,7 @@ function buildIndex(repoPath: string, sha: string): Index {
     }
   }
 
-  return { gitSha: sha, types };
+  return { gitSha: sha, parserVersion: PARSER_VERSION, types: mergePartialTypes(types) };
 }
 
 function writeIndex(indexPath: string, index: Index): void {
@@ -61,11 +61,12 @@ function writeIndex(indexPath: string, index: Index): void {
   fs.renameSync(tmp, indexPath);
 }
 
-function readStoredSha(indexPath: string): string | null {
+function readStoredMeta(indexPath: string): { sha: string; parserVersion: string } | null {
   try {
     const raw = fs.readFileSync(indexPath, 'utf-8');
     const parsed = JSON.parse(raw) as Partial<Index>;
-    return parsed.gitSha ?? null;
+    if (!parsed.gitSha) return null;
+    return { sha: parsed.gitSha, parserVersion: parsed.parserVersion ?? '' };
   } catch {
     return null;
   }
@@ -80,19 +81,22 @@ export interface IndexResult {
 
 export function loadOrBuild(repoPath: string, indexPath: string): IndexResult {
   const currentSha = getLocalSha(repoPath);
-  const storedSha = readStoredSha(indexPath);
+  const storedMeta = readStoredMeta(indexPath);
 
-  if (storedSha === currentSha) {
+  if (storedMeta?.sha === currentSha && storedMeta?.parserVersion === PARSER_VERSION) {
     const raw = fs.readFileSync(indexPath, 'utf-8');
     const index = JSON.parse(raw) as Index;
-    process.stderr.write(`Index up to date (${index.types.length} types, sha ${currentSha.slice(0, 8)})\n`);
+    process.stderr.write(`Index up to date (${index.types.length} types, sha ${currentSha.slice(0, 8)}, parser v${PARSER_VERSION})\n`);
     return { index, rebuilt: false, typesIndexed: index.types.length, sha: currentSha };
   }
 
-  process.stderr.write(`Rebuilding index from ${repoPath}...\n`);
+  const reason = !storedMeta ? 'no index'
+    : storedMeta.sha !== currentSha ? 'repo updated'
+    : 'parser version changed';
+  process.stderr.write(`Rebuilding index (${reason})...\n`);
   const index = buildIndex(repoPath, currentSha);
   writeIndex(indexPath, index);
-  process.stderr.write(`Indexed ${index.types.length} types (sha ${currentSha.slice(0, 8)})\n`);
+  process.stderr.write(`Indexed ${index.types.length} types (sha ${currentSha.slice(0, 8)}, parser v${PARSER_VERSION})\n`);
   return { index, rebuilt: true, typesIndexed: index.types.length, sha: currentSha };
 }
 
