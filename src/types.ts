@@ -17,7 +17,7 @@ export interface ParsedMethod {
 export interface ParsedType {
   name: string;
   namespace: string;
-  kind: 'struct' | 'enum';
+  kind: 'struct' | 'enum' | 'class';
   size: number | null;        // stored as decimal int, display as hex
   inherits: string | null;
   isGenerateInterop: boolean;
@@ -30,6 +30,7 @@ export interface ParsedType {
 
 export interface Index {
   gitSha: string;
+  parserVersion: string;
   types: ParsedType[];
 }
 
