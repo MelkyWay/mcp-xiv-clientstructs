@@ -9,9 +9,10 @@ function getLocalSha(repoPath: string): string {
 }
 
 function walkCsFiles(repoPath: string): string[] {
-  return (fs.readdirSync(repoPath, { recursive: true }) as string[])
+  const libraryPath = path.join(repoPath, 'FFXIVClientStructs');
+  return (fs.readdirSync(libraryPath, { recursive: true }) as string[])
     .filter(f => f.endsWith('.cs'))
-    .map(f => path.join(repoPath, f));
+    .map(f => path.join(libraryPath, f));
 }
 
 function buildIndex(repoPath: string, sha: string): Index {
