@@ -4,6 +4,9 @@ import { execSync } from 'node:child_process';
 import { parseFile } from './parser.js';
 import { Index, ParsedType } from './types.js';
 
+// Bump this whenever parsing logic changes to force a cache rebuild.
+export const PARSER_VERSION = '1';
+
 function getLocalSha(repoPath: string): string {
   return execSync('git rev-parse HEAD', { cwd: repoPath }).toString().trim();
 }
@@ -13,6 +16,26 @@ function walkCsFiles(repoPath: string): string[] {
   return (fs.readdirSync(libraryPath, { recursive: true }) as string[])
     .filter(f => f.endsWith('.cs'))
     .map(f => path.join(libraryPath, f));
+}
+
+export function mergePartialTypes(types: ParsedType[]): ParsedType[] {
+  const map = new Map<string, ParsedType>();
+  for (const type of types) {
+    const key = `${type.namespace}.${type.name}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.fields.push(...type.fields);
+      existing.methods.push(...type.methods);
+      if (existing.size === null)      existing.size      = type.size;
+      if (existing.inherits === null)  existing.inherits  = type.inherits;
+      if (existing.addonName === null) existing.addonName = type.addonName;
+      if (existing.agentId === null)   existing.agentId   = type.agentId;
+      existing.isGenerateInterop = existing.isGenerateInterop || type.isGenerateInterop;
+    } else {
+      map.set(key, { ...type, fields: [...type.fields], methods: [...type.methods] });
+    }
+  }
+  return [...map.values()];
 }
 
 function buildIndex(repoPath: string, sha: string): Index {
