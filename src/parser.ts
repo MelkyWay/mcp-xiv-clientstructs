@@ -1,7 +1,7 @@
 import { ParsedField, ParsedMethod, ParsedType } from './types.js';
 
 const RE_NAMESPACE       = /^namespace\s+([\w.]+)/;
-const RE_TYPE_DECL       = /^\s*public\s+(?:unsafe\s+)?(?:sealed\s+)?partial\s+(struct|enum|class)\s+(\w+)/;
+const RE_TYPE_DECL       = /^\s*public\s+(?:unsafe\s+)?(?:sealed\s+)?(?:partial\s+)?(struct|enum|class)\s+(\w+)/;
 const RE_STRUCT_LAYOUT   = /\[StructLayout\s*\(\s*LayoutKind\.Explicit\s*,\s*Size\s*=\s*(0x[\dA-Fa-f]+|\d+)\s*\)/;
 const RE_INHERITS        = /\[Inherits\s*<\s*([\w.]+)\s*>/;
 const RE_GENERATE_INTEROP = /\[GenerateInterop/;
