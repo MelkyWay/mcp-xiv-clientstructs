@@ -24,8 +24,8 @@ function buildIndex(repoPath: string, sha: string): Index {
       const content = fs.readFileSync(file, 'utf-8');
       const parsed = parseFile(content, file);
       types.push(...parsed);
-    } catch {
-      // Skip unparseable files
+    } catch (err) {
+      process.stderr.write(`Warning: failed to parse ${file}: ${err}\n`);
     }
   }
 
