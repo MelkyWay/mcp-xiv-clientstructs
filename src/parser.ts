@@ -7,7 +7,7 @@ const RE_INHERITS        = /\[Inherits\s*<\s*([\w.]+)\s*>/;
 const RE_GENERATE_INTEROP = /\[GenerateInterop/;
 const RE_ADDON           = /\[Addon(?:Attribute)?\s*\(\s*"([^"]+)"/;
 const RE_AGENT           = /\[Agent(?:Attribute)?\s*\(\s*(\d+)/;
-const RE_FIELD_OFFSET    = /\[FieldOffset\s*\(\s*(0x[\dA-Fa-f]+|\d+)\s*\)\]/;
+const RE_FIELD_OFFSET    = /\[FieldOffset\s*\(\s*(0x[\dA-Fa-f]+|\d+)\s*\)/;  // no trailing \] — supports compound attrs e.g. [FieldOffset(0x30), FixedSizeArray]
 const RE_FIELD_DECL      = /^\s*(?:public|internal|private)\s+(?:new\s+)?(?:readonly\s+)?([\w*<>[\],\s]+?)\s+(\w+)\s*(?:;|{)/;
 const RE_FIELD_FIXED     = /^\s*(?:public|internal|private)\s+fixed\s+(\w+)\s+(\w+)\s*\[\s*(0x[\dA-Fa-f]+|\d+)\s*\]/;
 const RE_MEMBER_FUNC     = /\[MemberFunction\s*\(\s*"([^"]*)"\s*\)\]/;
@@ -83,6 +83,27 @@ export function parseFile(content: string, filePath: string): ParsedType[] {
               pendingMethodAttr = null;
               continue;
             }
+          }
+        }
+        // Handle method attribute lines so they don't get lost in pendingAttrs
+        if (typeStack.length > 0) {
+          const memberMatch = RE_MEMBER_FUNC.exec(trimmed);
+          const virtualMatch = RE_VIRTUAL_FUNC.exec(trimmed);
+          const staticAddrMatch = RE_STATIC_ADDR.test(trimmed);
+          if (memberMatch) {
+            pendingMethodAttr = { kind: 'member', sig: memberMatch[1], idx: null };
+            pendingAttrs = [];
+            continue;
+          }
+          if (virtualMatch) {
+            pendingMethodAttr = { kind: 'virtual', sig: null, idx: parseInt(virtualMatch[1], 10) };
+            pendingAttrs = [];
+            continue;
+          }
+          if (staticAddrMatch) {
+            pendingMethodAttr = { kind: 'static_address', sig: null, idx: null };
+            pendingAttrs = [];
+            continue;
           }
         }
         pendingAttrs.push(trimmed);
