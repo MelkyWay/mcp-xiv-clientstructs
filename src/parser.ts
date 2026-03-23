@@ -115,7 +115,7 @@ export function parseFile(content: string, filePath: string): ParsedType[] {
     const typeMatch = RE_TYPE_DECL.exec(line);
     if (typeMatch) {
       const rawKind = typeMatch[1];
-      const kind: 'struct' | 'enum' = rawKind === 'enum' ? 'enum' : 'struct';
+      const kind: 'struct' | 'enum' | 'class' = rawKind === 'enum' ? 'enum' : rawKind === 'class' ? 'class' : 'struct';
       const typeName = typeMatch[2];
 
       // Build qualified name if nested
